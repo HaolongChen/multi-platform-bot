@@ -2,9 +2,9 @@
   "name": "multi-platform-bot",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "HaolongChen",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
     "build": "nest build",
