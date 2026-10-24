@@ -14,6 +14,10 @@ export class WechatService {
 		return wcf.Response.deserialize(response);
 	}
 
+	connect() {
+		this.adapter.connect();
+	}
+
 	startRecvMessage() {
 		const { status } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_ENABLE_RECV_TXT, flag: true }),
