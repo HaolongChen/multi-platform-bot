@@ -5,5 +5,8 @@
   "useTabs": true,
   "semi": true,
   "bracketSpacing": true,
-  "arrowParens": "always"
+  "arrowParens": "always",
+  "printWidth": 80,
+  "experimentalTernaries": true,
+  "insertPragma": false
 }

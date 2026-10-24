@@ -1,6 +1,5 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const chatSchema = z.object( {
-  roomId: z.string(),
-  
-})
+export const chatSchema = z.object({
+	roomId: z.string(),
+});

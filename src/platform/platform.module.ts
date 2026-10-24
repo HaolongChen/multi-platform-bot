@@ -4,9 +4,13 @@ import { WechatModule } from './wechat/wechat.module.js';
 import { ChatModule } from './chat/chat.module.js';
 import { MediaModule } from './media/media.module.js';
 import { UserModule } from './user/user.module.js';
+import { Socket } from '@rustup/nng';
 
 @Module({
-  providers: [PlatformService],
-  imports: [WechatModule, ChatModule, MediaModule, UserModule]
+	providers: [
+		PlatformService,
+		{ provide: 'WECHAT_SOCKET', useValue: new Socket({}) },
+	],
+	imports: [WechatModule, ChatModule, MediaModule, UserModule],
 })
 export class PlatformModule {}
