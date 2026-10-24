@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { IWechatAdapter } from './wechat.interface.js';
 import { wcf } from './wcf.js';
-import { WechatDTO } from './wechat.dto.js';
+import { Wechat } from './wechat.js';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
+import { WechatMessageReceivedEvent } from './event/wechat-message-received.event.js';
 
 @Injectable()
 export class WechatService {
@@ -24,11 +25,11 @@ export class WechatService {
 			console.error('Error receiving message:', err);
 			return;
 		}
-		const message = wcf.Response.deserialize(buffer);
-		this.eventEmitter.emit('wechat.messageReceived', message);
+		const message = Wechat.toPlain(wcf.Response.deserialize(buffer).wxmsg);
+		this.eventEmitter.emit('wechat.messageReceived', new WechatMessageReceivedEvent(message));
 	};
 
-	startListen() {
+	startListening() {
 		this.adapter.connect(this.cmdUrl);
 		this.adapter.listen(this.msgUrl, this.adapterListener);
 		this.startRecvMessage();
@@ -41,7 +42,7 @@ export class WechatService {
 		return status;
 	}
 
-	stopListen() {
+	stopListening() {
 		const { status } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_DISABLE_RECV_TXT }),
 		);
@@ -78,7 +79,7 @@ export class WechatService {
 		const { contacts } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_CONTACTS }),
 		);
-		return contacts.contacts.map(WechatDTO.toPlain);
+		return contacts.contacts.map(Wechat.toPlain);
 	}
 
 	getDbNames() {
@@ -92,14 +93,14 @@ export class WechatService {
 		const { tables } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_DB_TABLES, str: db }),
 		);
-		return tables.tables.map(WechatDTO.toPlain);
+		return tables.tables.map(Wechat.toPlain);
 	}
 
 	getUserInfo() {
 		const { ui } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_USER_INFO }),
 		);
-		return WechatDTO.toPlain(ui);
+		return Wechat.toPlain(ui);
 	}
 
 	getAudioMessage(id: string, dir: string) {
@@ -179,7 +180,7 @@ export class WechatService {
 		return status;
 	}
 
-	refreshMoment(id: string) {
+	refreshMoments(id: string) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_REFRESH_PYQ,
@@ -189,7 +190,7 @@ export class WechatService {
 		return status;
 	}
 
-	downloadAttach(id: string, thumb: string = '', extra: string = ''): number {
+	downloadAttachment(id: string, thumb: string = '', extra: string = ''): number {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_DOWNLOAD_ATTACH,
 			att: new wcf.AttachMsg({
