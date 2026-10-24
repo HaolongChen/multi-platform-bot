@@ -2,11 +2,16 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { IWechatAdapter } from './wechat.interface.js';
 import { wcf } from './wcf.js';
 import { WechatDTO } from './wechat.dto.js';
+import type { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class WechatService {
-	@Inject('WECHAT_ADAPTER')
-	private adapter: IWechatAdapter;
+	constructor(
+		@Inject('WECHAT_ADAPTER') private adapter: IWechatAdapter,
+		@Inject('CMD_URL') private cmdUrl: string,
+		@Inject('MSG_URL') private msgUrl: string,
+		private eventEmitter: EventEmitter2,
+	) {}
 
 	private send(message: wcf.Request): wcf.Response {
 		const buffer = Buffer.from(message.serialize());
@@ -14,18 +19,29 @@ export class WechatService {
 		return wcf.Response.deserialize(response);
 	}
 
-	connect() {
-		this.adapter.connect();
+	private adapterListener = (err: unknown | undefined, buffer: Buffer) => {
+		if (err) {
+			console.error('Error receiving message:', err);
+			return;
+		}
+		const message = wcf.Response.deserialize(buffer);
+		this.eventEmitter.emit('wechat.messageReceived', message);
+	};
+
+	startListen() {
+		this.adapter.connect(this.cmdUrl);
+		this.adapter.listen(this.msgUrl, this.adapterListener);
+		this.startRecvMessage();
 	}
 
-	startRecvMessage() {
+	private startRecvMessage() {
 		const { status } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_ENABLE_RECV_TXT, flag: true }),
 		);
 		return status;
 	}
 
-	stopRecvMessage() {
+	stopListen() {
 		const { status } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_DISABLE_RECV_TXT }),
 		);

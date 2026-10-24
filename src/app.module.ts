@@ -4,10 +4,12 @@ import { AppService } from './app.service.js';
 import { PlatformModule } from './platform/platform.module.js';
 import { ConfigModule } from '@nestjs/config';
 import { envSchema } from './config/env.schema.js';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
+		EventEmitterModule.forRoot(),
 		PlatformModule,
 	],
 	controllers: [AppController],
