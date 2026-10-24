@@ -22,10 +22,7 @@ export class Wechat {
 
 export type WechatMessage = ToPlainType<wcf.Response['wxmsg']>;
 
-export const WechatMessagingCommandList: Record<
-	string,
-	keyof typeof wcf.Functions
-> = {
+export const WechatMessagingCommandList = {
 	IS_LOGIN: 'FUNC_IS_LOGIN',
 	GET_SELF_WXID: 'FUNC_GET_SELF_WXID',
 	GET_MESSAGE_TYPES: 'FUNC_GET_MSG_TYPES',
@@ -48,11 +45,3 @@ export const WechatMessagingCommandList: Record<
 	INVITE_ROOM_MEMBERS: 'FUNC_INV_ROOM_MEMBERS',
 	STOP_LISTENING: 'FUNC_DISABLE_RECV_TXT',
 } as const;
-
-export type WechatMessagingCommand = Record<
-	keyof typeof WechatMessagingCommandList,
-	{ [key: Exclude<string, 'resolve' | 'reject'>]: any } & {
-		resolve: (value: any) => void;
-		reject: (reason?: any) => void;
-	}
->;

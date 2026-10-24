@@ -1,7 +1,12 @@
 import type { wcf } from '../wcf.js';
-import type { WechatToPlainType } from '../wechat.js';
+import {
+	WechatMessagingCommandList,
+	type WechatToPlainType,
+} from '../wechat.js';
 
-export class WechatMessageCreatedEvent<T extends keyof CommandTypeMap> {
+export class WechatMessageCreatedEvent<
+	T extends keyof typeof WechatMessagingCommandList,
+> {
 	constructor(readonly payload: CommandTypeMap[T]) {}
 }
 
@@ -10,6 +15,12 @@ type EventPromiseType<T = undefined> = {
 	// oxlint-disable-next-line typescript/no-explicit-any
 	reject: (reason?: any) => void;
 };
+
+
+type ExtractPayload<T extends keyof typeof WechatMessagingCommandList> =
+	CommandTypeMap[T]['resolve'] extends () => void ? void
+	: CommandTypeMap[T]['resolve'] extends (value: infer U) => void ? U
+	: never;
 
 export type CommandTypeMap = {
 	IS_LOGIN: EventPromiseType;
@@ -20,7 +31,7 @@ export type CommandTypeMap = {
 		db: string;
 	};
 	GET_USER_INFO: EventPromiseType<WechatToPlainType<wcf.UserInfo>>;
-	GET_DB_NAMES: EventPromiseType<WechatToPlainType<wcf.DbNames>>;
+	GET_DB_NAMES: EventPromiseType<string[]>;
 	GET_AUDIO_MESSAGE: EventPromiseType<string> & { id: string; dir: string };
 	SEND_TEXT_MESSAGE: EventPromiseType<number> & {
 		message: string;
@@ -31,8 +42,14 @@ export type CommandTypeMap = {
 		desc: Omit<ReturnType<wcf.RichText['toObject']>, 'receiver'>;
 		receiver: string;
 	};
-	SEND_PAT_MESSAGE: EventPromiseType<number> & { roomId: string; wxid: string };
-	FORWARD_MESSAGE: EventPromiseType<number> & { id: string; receiver: string };
+	SEND_PAT_MESSAGE: EventPromiseType<number> & {
+		roomId: string;
+		wxid: string;
+	};
+	FORWARD_MESSAGE: EventPromiseType<number> & {
+		id: string;
+		receiver: string;
+	};
 	ACCEPT_FRIEND_REQUEST: EventPromiseType<number> & {
 		v3: string;
 		v4: string;
@@ -64,3 +81,15 @@ export type CommandTypeMap = {
 	};
 	STOP_LISTENING: EventPromiseType<number>;
 };
+
+export type EventHandlerMap = {
+	[T in keyof typeof WechatMessagingCommandList]: Exclude<
+		keyof CommandTypeMap[T],
+		'resolve' | 'reject'
+	> extends never ?
+		() => ExtractPayload<T>
+	:	 (
+			payload: Omit<CommandTypeMap[T], 'resolve' | 'reject'>,
+		) => ExtractPayload<T>;
+};
+

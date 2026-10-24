@@ -4,6 +4,10 @@ import { wcf } from './wcf.js';
 import { Wechat } from './wechat.js';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
 import { WechatMessageReceivedEvent } from './event/wechat-message-received.event.js';
+import type {
+	CommandTypeMap,
+	EventHandlerMap,
+} from './event/wechat-message-created.event.js';
 
 @Injectable()
 export class WechatService {
@@ -26,7 +30,10 @@ export class WechatService {
 			return;
 		}
 		const message = Wechat.toPlain(wcf.Response.deserialize(buffer).wxmsg);
-		this.eventEmitter.emit('wechat.messageReceived', new WechatMessageReceivedEvent(message));
+		this.eventEmitter.emit(
+			'wechat.messageReceived',
+			new WechatMessageReceivedEvent(message),
+		);
 	};
 
 	startListening() {
@@ -89,9 +96,12 @@ export class WechatService {
 		return dbs.names;
 	}
 
-	getDbTables(db: string) {
+	getDbTables(payload: { db: string }) {
 		const { tables } = this.send(
-			new wcf.Request({ func: wcf.Functions.FUNC_GET_DB_TABLES, str: db }),
+			new wcf.Request({
+				func: wcf.Functions.FUNC_GET_DB_TABLES,
+				str: payload.db,
+			}),
 		);
 		return tables.tables.map(Wechat.toPlain);
 	}
@@ -103,149 +113,238 @@ export class WechatService {
 		return Wechat.toPlain(ui);
 	}
 
-	getAudioMessage(id: string, dir: string) {
+	getAudioMessage(payload: { id: string; dir: string }) {
 		const { str } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_GET_AUDIO_MSG,
-				am: new wcf.AudioMsg({ id, dir }),
+				am: new wcf.AudioMsg(payload),
 			}),
 		);
 		return str;
 	}
 
-	sendTextMessage(message: string, receiver: string, mentions: string[] = []) {
+	sendTextMessage(payload: {
+		message: string;
+		receiver: string;
+		mentions?: string[];
+	}) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_SEND_TXT,
 				txt: new wcf.TextMsg({
-					msg: message,
-					receiver,
-					aters: mentions?.join(','),
+					msg: payload.message,
+					receiver: payload.receiver,
+					aters: payload.mentions?.join(','),
 				}),
 			}),
 		);
 		return status;
 	}
 
-	sendRichTextMessage(
-		desc: Omit<ReturnType<wcf.RichText['toObject']>, 'receiver'>,
-		receiver: string,
-	) {
+	sendRichTextMessage(payload: {
+		desc: Omit<ReturnType<wcf.RichText['toObject']>, 'receiver'>;
+		receiver: string;
+	}) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_SEND_RICH_TXT,
-				rt: new wcf.RichText({ ...desc, receiver }),
+				rt: new wcf.RichText(payload),
 			}),
 		);
 		return status;
 	}
 
-	sendPatMessage(roomId: string, wxid: string) {
+	sendPatMessage(payload: { roomId: string; wxid: string }) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_SEND_PAT_MSG,
-				pm: new wcf.PatMsg({ roomid: roomId, wxid }),
+				pm: new wcf.PatMsg({ roomid: payload.roomId, wxid: payload.wxid }),
 			}),
 		);
 		return status;
 	}
 
-	forwardMessage(id: string, receiver: string) {
+	forwardMessage(payload: { id: string; receiver: string }) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_FORWARD_MSG,
-				fm: new wcf.ForwardMsg({ id, receiver }),
+				fm: new wcf.ForwardMsg(payload),
 			}),
 		);
 		return status;
 	}
 
-	acceptFriendRequest(v3: string, v4: string, scene = 30) {
+	acceptFriendRequest(payload: { v3: string; v4: string; scene?: number }) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_ACCEPT_FRIEND,
-				v: new wcf.Verification({ v3, v4, scene }),
+				v: new wcf.Verification({ scene: payload.scene ?? 30, ...payload }),
 			}),
 		);
 		return status;
 	}
 
-	receiveTransfer(wxid: string, transferId: string, transactionId: string) {
+	receiveTransfer(payload: {
+		wxid: string;
+		transferId: string;
+		transactionId: string;
+	}) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_RECV_TRANSFER,
-				tf: new wcf.Transfer({ wxid, tfid: transferId, taid: transactionId }),
+				tf: new wcf.Transfer({
+					wxid: payload.wxid,
+					tfid: payload.transferId,
+					taid: payload.transactionId,
+				}),
 			}),
 		);
 		return status;
 	}
 
-	refreshMoments(id: string) {
+	refreshMoments(payload: { id: string }) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_REFRESH_PYQ,
-				ui64: id,
+				ui64: payload.id,
 			}),
 		);
 		return status;
 	}
 
-	downloadAttachment(id: string, thumb: string = '', extra: string = ''): number {
+	downloadAttachment(payload: {
+		id: string;
+		thumb?: string;
+		extra?: string;
+	}): number {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_DOWNLOAD_ATTACH,
 			att: new wcf.AttachMsg({
-				id,
-				thumb,
-				extra,
+				id: payload.id,
+				thumb: payload.thumb || '',
+				extra: payload.extra || '',
 			}),
 		});
 		const { status } = this.send(req);
 		return status;
 	}
 
-	revokeMessage(id: string) {
+	revokeMessage(payload: { id: string }) {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_REVOKE_MSG,
-				ui64: id,
+				ui64: payload.id,
 			}),
 		);
 		return status;
 	}
 
-	addRoomMembers(roomId: string, wxidList: string[]) {
+	addRoomMembers(payload: { roomId: string; wxidList: string[] }) {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_ADD_ROOM_MEMBERS,
 			m: new wcf.MemberMgmt({
-				roomid: roomId,
-				wxids: wxidList.join(',').replaceAll(' ', ''),
+				roomid: payload.roomId,
+				wxids: payload.wxidList.join(',').replaceAll(' ', ''),
 			}),
 		});
 		const { status } = this.send(req);
 		return status;
 	}
 
-	deleteRoomMembers(roomId: string, wxidList: string[]) {
+	deleteRoomMembers(payload: { roomId: string; wxidList: string[] }) {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_DEL_ROOM_MEMBERS,
 			m: new wcf.MemberMgmt({
-				roomid: roomId,
-				wxids: wxidList.join(',').replaceAll(' ', ''),
+				roomid: payload.roomId,
+				wxids: payload.wxidList.join(',').replaceAll(' ', ''),
 			}),
 		});
 		const { status } = this.send(req);
 		return status;
 	}
 
-	inviteRoomMembers(roomId: string, wxidList: string[]) {
+	inviteRoomMembers(payload: { roomId: string; wxidList: string[] }) {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_INV_ROOM_MEMBERS,
 			m: new wcf.MemberMgmt({
-				roomid: roomId,
-				wxids: wxidList.join(',').replaceAll(' ', ''),
+				roomid: payload.roomId,
+				wxids: payload.wxidList.join(',').replaceAll(' ', ''),
 			}),
 		});
 		const { status } = this.send(req);
 		return status;
 	}
+
+	/**
+	 * Get an event handler for a specific command type.
+	 */
+	public getEventHandler = <T extends keyof CommandTypeMap>(
+		token: T,
+	): EventHandlerMap[T] => {
+		switch (token) {
+			case 'IS_LOGIN':
+				return () => this.isLogin();
+			case 'GET_SELF_WXID':
+				return () => this.getSelfWxid();
+			case 'GET_MESSAGE_TYPES':
+				return () => this.getMessageType();
+			case 'GET_CONTACTS':
+				return () => this.getContacts();
+			case 'GET_DB_TABLES':
+				return (payload: { db: string }) => this.getDbTables(payload);
+			case 'GET_USER_INFO':
+				return () => this.getUserInfo();
+			case 'GET_DB_NAMES':
+				return () => this.getDbNames();
+			case 'GET_AUDIO_MESSAGE':
+				return (payload: { id: string; dir: string }) =>
+					this.getAudioMessage(payload);
+			case 'SEND_TEXT_MESSAGE':
+				return (payload: {
+					message: string;
+					receiver: string;
+					mentions?: string[];
+				}) => this.sendTextMessage(payload);
+			case 'SEND_RICH_TEXT_MESSAGE':
+				return (payload: {
+					desc: Omit<ReturnType<wcf.RichText['toObject']>, 'receiver'>;
+					receiver: string;
+				}) => this.sendRichTextMessage(payload);
+			case 'SEND_PAT_MESSAGE':
+				return (payload: { roomId: string; wxid: string }) =>
+					this.sendPatMessage(payload);
+			case 'FORWARD_MESSAGE':
+				return (payload: { id: string; receiver: string }) =>
+					this.forwardMessage(payload);
+			case 'ACCEPT_FRIEND_REQUEST':
+				return (payload: { v3: string; v4: string; scene?: number }) =>
+					this.acceptFriendRequest(payload);
+			case 'RECEIVE_TRANSFER':
+				return (payload: {
+					wxid: string;
+					transferId: string;
+					transactionId: string;
+				}) => this.receiveTransfer(payload);
+			case 'REFRESH_MOMENTS':
+				return (payload: { id: string }) => this.refreshMoments(payload);
+			case 'DOWNLOAD_ATTACHMENT':
+				return (payload: { id: string; thumb?: string; extra?: string }) =>
+					this.downloadAttachment(payload);
+			case 'REVOKE_MESSAGE':
+				return (payload: { id: string }) => this.revokeMessage(payload);
+			case 'ADD_ROOM_MEMBERS':
+				return (payload: { roomId: string; wxidList: string[] }) =>
+					this.addRoomMembers(payload);
+			case 'DELETE_ROOM_MEMBERS':
+				return (payload: { roomId: string; wxidList: string[] }) =>
+					this.deleteRoomMembers(payload);
+			case 'INVITE_ROOM_MEMBERS':
+				return (payload: { roomId: string; wxidList: string[] }) =>
+					this.inviteRoomMembers(payload);
+			case 'STOP_LISTENING':
+				return () => this.stopListening();
+			default:
+				throw new Error(`Unknown command type: ${token}`);
+		}
+	};
 }
