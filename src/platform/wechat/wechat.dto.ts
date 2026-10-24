@@ -1,3 +1,5 @@
+import type { wcf } from "./wcf.js";
+
 type ToPlainType<T extends { toObject: () => unknown }> = Required<
 	ReturnType<T['toObject']>
 >;
@@ -9,3 +11,5 @@ export class WechatDTO {
 		return data.toObject() as ToPlainType<T>;
 	}
 }
+
+export type WechatMessage = ToPlainType<wcf.Response['wxmsg']>;

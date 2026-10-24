@@ -125,4 +125,126 @@ export class WechatService {
 		);
 		return status;
 	}
+
+	sendRichTextMessage(
+		desc: Omit<ReturnType<wcf.RichText['toObject']>, 'receiver'>,
+		receiver: string,
+	) {
+		const { status } = this.send(
+			new wcf.Request({
+				func: wcf.Functions.FUNC_SEND_RICH_TXT,
+				rt: new wcf.RichText({ ...desc, receiver }),
+			}),
+		);
+		return status;
+	}
+
+	sendPatMessage(roomId: string, wxid: string) {
+		const { status } = this.send(
+			new wcf.Request({
+				func: wcf.Functions.FUNC_SEND_PAT_MSG,
+				pm: new wcf.PatMsg({ roomid: roomId, wxid }),
+			}),
+		);
+		return status;
+	}
+
+	forwardMessage(id: string, receiver: string) {
+		const { status } = this.send(
+			new wcf.Request({
+				func: wcf.Functions.FUNC_FORWARD_MSG,
+				fm: new wcf.ForwardMsg({ id, receiver }),
+			}),
+		);
+		return status;
+	}
+
+	acceptFriendRequest(v3: string, v4: string, scene = 30) {
+		const { status } = this.send(
+			new wcf.Request({
+				func: wcf.Functions.FUNC_ACCEPT_FRIEND,
+				v: new wcf.Verification({ v3, v4, scene }),
+			}),
+		);
+		return status;
+	}
+
+	receiveTransfer(wxid: string, transferId: string, transactionId: string) {
+		const { status } = this.send(
+			new wcf.Request({
+				func: wcf.Functions.FUNC_RECV_TRANSFER,
+				tf: new wcf.Transfer({ wxid, tfid: transferId, taid: transactionId }),
+			}),
+		);
+		return status;
+	}
+
+	refreshMoment(id: string) {
+		const { status } = this.send(
+			new wcf.Request({
+				func: wcf.Functions.FUNC_REFRESH_PYQ,
+				ui64: id,
+			}),
+		);
+		return status;
+	}
+
+	downloadAttach(id: string, thumb: string = '', extra: string = ''): number {
+		const req = new wcf.Request({
+			func: wcf.Functions.FUNC_DOWNLOAD_ATTACH,
+			att: new wcf.AttachMsg({
+				id,
+				thumb,
+				extra,
+			}),
+		});
+		const { status } = this.send(req);
+		return status;
+	}
+
+	revokeMessage(id: string) {
+		const { status } = this.send(
+			new wcf.Request({
+				func: wcf.Functions.FUNC_REVOKE_MSG,
+				ui64: id,
+			}),
+		);
+		return status;
+	}
+
+	addRoomMembers(roomId: string, wxidList: string[]) {
+		const req = new wcf.Request({
+			func: wcf.Functions.FUNC_ADD_ROOM_MEMBERS,
+			m: new wcf.MemberMgmt({
+				roomid: roomId,
+				wxids: wxidList.join(',').replaceAll(' ', ''),
+			}),
+		});
+		const { status } = this.send(req);
+		return status;
+	}
+
+	deleteRoomMembers(roomId: string, wxidList: string[]) {
+		const req = new wcf.Request({
+			func: wcf.Functions.FUNC_DEL_ROOM_MEMBERS,
+			m: new wcf.MemberMgmt({
+				roomid: roomId,
+				wxids: wxidList.join(',').replaceAll(' ', ''),
+			}),
+		});
+		const { status } = this.send(req);
+		return status;
+	}
+
+	inviteRoomMembers(roomId: string, wxidList: string[]) {
+		const req = new wcf.Request({
+			func: wcf.Functions.FUNC_INV_ROOM_MEMBERS,
+			m: new wcf.MemberMgmt({
+				roomid: roomId,
+				wxids: wxidList.join(',').replaceAll(' ', ''),
+			}),
+		});
+		const { status } = this.send(req);
+		return status;
+	}
 }
