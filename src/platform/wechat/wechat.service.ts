@@ -1,16 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { IWechatAdapter } from './wechat.interface.js';
 import { wcf } from './wcf.js';
-import { Wechat } from './wechat.js';
-import type { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+	Wechat,
+	WechatMessagingCommandList,
+	type IWechatService,
+} from './wechat.js';
+import { OnEvent, type EventEmitter2 } from '@nestjs/event-emitter';
 import { WechatMessageReceivedEvent } from './event/wechat-message-received.event.js';
-import type {
-	CommandTypeMap,
-	EventHandlerMap,
-} from './event/wechat-message-created.event.js';
+import type { WechatMessageCreatedEvent } from './event/wechat-message-created.event.js';
 
 @Injectable()
-export class WechatService {
+export class WechatService implements IWechatService {
 	constructor(
 		@Inject('WECHAT_ADAPTER') private adapter: IWechatAdapter,
 		@Inject('CMD_URL') private cmdUrl: string,
@@ -275,76 +276,15 @@ export class WechatService {
 		return status;
 	}
 
-	/**
-	 * Get an event handler for a specific command type.
-	 */
-	public getEventHandler = <T extends keyof CommandTypeMap>(
-		token: T,
-	): EventHandlerMap[T] => {
-		switch (token) {
-			case 'IS_LOGIN':
-				return () => this.isLogin();
-			case 'GET_SELF_WXID':
-				return () => this.getSelfWxid();
-			case 'GET_MESSAGE_TYPES':
-				return () => this.getMessageType();
-			case 'GET_CONTACTS':
-				return () => this.getContacts();
-			case 'GET_DB_TABLES':
-				return (payload: { db: string }) => this.getDbTables(payload);
-			case 'GET_USER_INFO':
-				return () => this.getUserInfo();
-			case 'GET_DB_NAMES':
-				return () => this.getDbNames();
-			case 'GET_AUDIO_MESSAGE':
-				return (payload: { id: string; dir: string }) =>
-					this.getAudioMessage(payload);
-			case 'SEND_TEXT_MESSAGE':
-				return (payload: {
-					message: string;
-					receiver: string;
-					mentions?: string[];
-				}) => this.sendTextMessage(payload);
-			case 'SEND_RICH_TEXT_MESSAGE':
-				return (payload: {
-					desc: Omit<ReturnType<wcf.RichText['toObject']>, 'receiver'>;
-					receiver: string;
-				}) => this.sendRichTextMessage(payload);
-			case 'SEND_PAT_MESSAGE':
-				return (payload: { roomId: string; wxid: string }) =>
-					this.sendPatMessage(payload);
-			case 'FORWARD_MESSAGE':
-				return (payload: { id: string; receiver: string }) =>
-					this.forwardMessage(payload);
-			case 'ACCEPT_FRIEND_REQUEST':
-				return (payload: { v3: string; v4: string; scene?: number }) =>
-					this.acceptFriendRequest(payload);
-			case 'RECEIVE_TRANSFER':
-				return (payload: {
-					wxid: string;
-					transferId: string;
-					transactionId: string;
-				}) => this.receiveTransfer(payload);
-			case 'REFRESH_MOMENTS':
-				return (payload: { id: string }) => this.refreshMoments(payload);
-			case 'DOWNLOAD_ATTACHMENT':
-				return (payload: { id: string; thumb?: string; extra?: string }) =>
-					this.downloadAttachment(payload);
-			case 'REVOKE_MESSAGE':
-				return (payload: { id: string }) => this.revokeMessage(payload);
-			case 'ADD_ROOM_MEMBERS':
-				return (payload: { roomId: string; wxidList: string[] }) =>
-					this.addRoomMembers(payload);
-			case 'DELETE_ROOM_MEMBERS':
-				return (payload: { roomId: string; wxidList: string[] }) =>
-					this.deleteRoomMembers(payload);
-			case 'INVITE_ROOM_MEMBERS':
-				return (payload: { roomId: string; wxidList: string[] }) =>
-					this.inviteRoomMembers(payload);
-			case 'STOP_LISTENING':
-				return () => this.stopListening();
-			default:
-				throw new Error(`Unknown command type: ${token}`);
+	@OnEvent('wechat.messageCreated')
+	onMessageCreated<T extends keyof typeof WechatMessagingCommandList>(
+		payload: WechatMessageCreatedEvent<T>,
+	) {
+		const handler = this[WechatMessagingCommandList[payload.command]];
+		if (payload.payload.payload) {
+			payload.payload.resolve(handler(payload.payload.payload));
+		} else {
+			payload.payload.resolve(handler());
 		}
-	};
+	}
 }
