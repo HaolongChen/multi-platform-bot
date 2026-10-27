@@ -1,7 +1,4 @@
-import {
-	WechatMessagingCommandList,
-	type IWechatService,
-} from '../wechat.js';
+import { WechatMessagingCommandList, type IWechatService } from '../wechat.js';
 
 export class WechatMessageCreatedEvent<
 	T extends keyof typeof WechatMessagingCommandList,

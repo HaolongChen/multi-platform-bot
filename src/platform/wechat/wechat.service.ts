@@ -37,11 +37,11 @@ export class WechatService implements IWechatService {
 		);
 	};
 
-	startListening() {
+	readonly startListening = () => {
 		this.adapter.connect(this.cmdUrl);
 		this.adapter.listen(this.msgUrl, this.adapterListener);
 		this.startRecvMessage();
-	}
+	};
 
 	private startRecvMessage() {
 		const { status } = this.send(
@@ -50,14 +50,14 @@ export class WechatService implements IWechatService {
 		return status;
 	}
 
-	stopListening() {
+	readonly stopListening = () => {
 		const { status } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_DISABLE_RECV_TXT }),
 		);
 		return status;
-	}
+	};
 
-	isLogin() {
+	readonly isLogin = () => {
 		try {
 			const { status } = this.send(
 				new wcf.Request({ func: wcf.Functions.FUNC_IS_LOGIN }),
@@ -67,37 +67,37 @@ export class WechatService implements IWechatService {
 			console.error(error);
 		}
 		return false;
-	}
+	};
 
-	getSelfWxid() {
+	readonly getSelfWxid = () => {
 		const { str } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_SELF_WXID }),
 		);
 		return str;
-	}
+	};
 
-	getMessageType() {
+	readonly getMessageType = () => {
 		const { types } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_MSG_TYPES }),
 		);
 		return types.types;
-	}
+	};
 
-	getContacts() {
+	readonly getContacts = () => {
 		const { contacts } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_CONTACTS }),
 		);
 		return contacts.contacts.map(Wechat.toPlain);
-	}
+	};
 
-	getDbNames() {
+	readonly getDbNames = () => {
 		const { dbs } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_DB_NAMES }),
 		);
 		return dbs.names;
-	}
+	};
 
-	getDbTables(payload: { db: string }) {
+	readonly getDbTables = (payload: { db: string }) => {
 		const { tables } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_GET_DB_TABLES,
@@ -105,16 +105,16 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return tables.tables.map(Wechat.toPlain);
-	}
+	};
 
-	getUserInfo() {
+	readonly getUserInfo = () => {
 		const { ui } = this.send(
 			new wcf.Request({ func: wcf.Functions.FUNC_GET_USER_INFO }),
 		);
 		return Wechat.toPlain(ui);
-	}
+	};
 
-	getAudioMessage(payload: { id: string; dir: string }) {
+	readonly getAudioMessage = (payload: { id: string; dir: string }) => {
 		const { str } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_GET_AUDIO_MSG,
@@ -122,13 +122,13 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return str;
-	}
+	};
 
-	sendTextMessage(payload: {
+	readonly sendTextMessage = (payload: {
 		message: string;
 		receiver: string;
 		mentions?: string[];
-	}) {
+	}) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_SEND_TXT,
@@ -140,12 +140,12 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	sendRichTextMessage(payload: {
+	readonly sendRichTextMessage = (payload: {
 		desc: Omit<ReturnType<wcf.RichText['toObject']>, 'receiver'>;
 		receiver: string;
-	}) {
+	}) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_SEND_RICH_TXT,
@@ -153,9 +153,9 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	sendPatMessage(payload: { roomId: string; wxid: string }) {
+	readonly sendPatMessage = (payload: { roomId: string; wxid: string }) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_SEND_PAT_MSG,
@@ -163,9 +163,9 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	forwardMessage(payload: { id: string; receiver: string }) {
+	readonly forwardMessage = (payload: { id: string; receiver: string }) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_FORWARD_MSG,
@@ -173,9 +173,13 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	acceptFriendRequest(payload: { v3: string; v4: string; scene?: number }) {
+	readonly acceptFriendRequest = (payload: {
+		v3: string;
+		v4: string;
+		scene?: number;
+	}) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_ACCEPT_FRIEND,
@@ -183,13 +187,13 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	receiveTransfer(payload: {
+	readonly receiveTransfer = (payload: {
 		wxid: string;
 		transferId: string;
 		transactionId: string;
-	}) {
+	}) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_RECV_TRANSFER,
@@ -201,9 +205,9 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	refreshMoments(payload: { id: string }) {
+	readonly refreshMoments = (payload: { id: string }) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_REFRESH_PYQ,
@@ -211,13 +215,13 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	downloadAttachment(payload: {
+	readonly downloadAttachment = (payload: {
 		id: string;
 		thumb?: string;
 		extra?: string;
-	}): number {
+	}) => {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_DOWNLOAD_ATTACH,
 			att: new wcf.AttachMsg({
@@ -228,9 +232,9 @@ export class WechatService implements IWechatService {
 		});
 		const { status } = this.send(req);
 		return status;
-	}
+	};
 
-	revokeMessage(payload: { id: string }) {
+	readonly revokeMessage = (payload: { id: string }) => {
 		const { status } = this.send(
 			new wcf.Request({
 				func: wcf.Functions.FUNC_REVOKE_MSG,
@@ -238,9 +242,12 @@ export class WechatService implements IWechatService {
 			}),
 		);
 		return status;
-	}
+	};
 
-	addRoomMembers(payload: { roomId: string; wxidList: string[] }) {
+	readonly addRoomMembers = (payload: {
+		roomId: string;
+		wxidList: string[];
+	}) => {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_ADD_ROOM_MEMBERS,
 			m: new wcf.MemberMgmt({
@@ -250,9 +257,12 @@ export class WechatService implements IWechatService {
 		});
 		const { status } = this.send(req);
 		return status;
-	}
+	};
 
-	deleteRoomMembers(payload: { roomId: string; wxidList: string[] }) {
+	readonly deleteRoomMembers = (payload: {
+		roomId: string;
+		wxidList: string[];
+	}) => {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_DEL_ROOM_MEMBERS,
 			m: new wcf.MemberMgmt({
@@ -262,9 +272,12 @@ export class WechatService implements IWechatService {
 		});
 		const { status } = this.send(req);
 		return status;
-	}
+	};
 
-	inviteRoomMembers(payload: { roomId: string; wxidList: string[] }) {
+	readonly inviteRoomMembers = (payload: {
+		roomId: string;
+		wxidList: string[];
+	}) => {
 		const req = new wcf.Request({
 			func: wcf.Functions.FUNC_INV_ROOM_MEMBERS,
 			m: new wcf.MemberMgmt({
@@ -274,7 +287,7 @@ export class WechatService implements IWechatService {
 		});
 		const { status } = this.send(req);
 		return status;
-	}
+	};
 
 	@OnEvent('wechat.messageCreated')
 	onMessageCreated<T extends keyof typeof WechatMessagingCommandList>(

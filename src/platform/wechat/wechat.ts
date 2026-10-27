@@ -46,17 +46,24 @@ export const WechatMessagingCommandList = {
 	STOP_LISTENING: 'stopListening',
 } as const;
 
-
 export type IWechatService = {
 	readonly [WechatMessagingCommandList.STOP_LISTENING]: () => void;
 	readonly [WechatMessagingCommandList.IS_LOGIN]: () => boolean;
 	readonly [WechatMessagingCommandList.GET_SELF_WXID]: () => string;
-	readonly [WechatMessagingCommandList.GET_MESSAGE_TYPES]: () => Map<number, string>;
+	readonly [WechatMessagingCommandList.GET_MESSAGE_TYPES]: () => Map<
+		number,
+		string
+	>;
 	readonly [WechatMessagingCommandList.GET_CONTACTS]: () => WechatToPlainType<wcf.RpcContact>[];
-	readonly [WechatMessagingCommandList.GET_DB_TABLES]: (payload: { db: string }) => WechatToPlainType<wcf.DbTable>[];
+	readonly [WechatMessagingCommandList.GET_DB_TABLES]: (payload: {
+		db: string;
+	}) => WechatToPlainType<wcf.DbTable>[];
 	readonly [WechatMessagingCommandList.GET_USER_INFO]: () => WechatToPlainType<wcf.UserInfo>;
 	readonly [WechatMessagingCommandList.GET_DB_NAMES]: () => string[];
-	readonly [WechatMessagingCommandList.GET_AUDIO_MESSAGE]: (payload: { id: string; dir: string }) => string;
+	readonly [WechatMessagingCommandList.GET_AUDIO_MESSAGE]: (payload: {
+		id: string;
+		dir: string;
+	}) => string;
 	readonly [WechatMessagingCommandList.SEND_TEXT_MESSAGE]: (payload: {
 		message: string;
 		receiver: string;
@@ -68,8 +75,14 @@ export type IWechatService = {
 		receiver: string;
 	}) => number;
 
-	readonly [WechatMessagingCommandList.SEND_PAT_MESSAGE]: (payload: { roomId: string; wxid: string }) => number;
-	readonly [WechatMessagingCommandList.FORWARD_MESSAGE]: (payload: { id: string; receiver: string }) => number;
+	readonly [WechatMessagingCommandList.SEND_PAT_MESSAGE]: (payload: {
+		roomId: string;
+		wxid: string;
+	}) => number;
+	readonly [WechatMessagingCommandList.FORWARD_MESSAGE]: (payload: {
+		id: string;
+		receiver: string;
+	}) => number;
 	readonly [WechatMessagingCommandList.ACCEPT_FRIEND_REQUEST]: (payload: {
 		v3: string;
 		v4: string;
@@ -82,7 +95,9 @@ export type IWechatService = {
 		transactionId: string;
 	}) => number;
 
-	readonly [WechatMessagingCommandList.REFRESH_MOMENTS]: (payload: { id: string }) => number;
+	readonly [WechatMessagingCommandList.REFRESH_MOMENTS]: (payload: {
+		id: string;
+	}) => number;
 
 	readonly [WechatMessagingCommandList.DOWNLOAD_ATTACHMENT]: (payload: {
 		id: string;
@@ -90,12 +105,28 @@ export type IWechatService = {
 		extra?: string;
 	}) => number;
 
-	readonly [WechatMessagingCommandList.REVOKE_MESSAGE]: (payload: { id: string }) => number;
+	readonly [WechatMessagingCommandList.REVOKE_MESSAGE]: (payload: {
+		id: string;
+	}) => number;
 
-	readonly [WechatMessagingCommandList.ADD_ROOM_MEMBERS]: (payload: { roomId: string; wxidList: string[] }) => number;
-	readonly [WechatMessagingCommandList.DELETE_ROOM_MEMBERS]: (payload: { roomId: string; wxidList: string[] }) => number;
-	readonly [WechatMessagingCommandList.INVITE_ROOM_MEMBERS]: (payload: { roomId: string; wxidList: string[] }) => number;
-}
+	readonly [WechatMessagingCommandList.ADD_ROOM_MEMBERS]: (payload: {
+		roomId: string;
+		wxidList: string[];
+	}) => number;
+	readonly [WechatMessagingCommandList.DELETE_ROOM_MEMBERS]: (payload: {
+		roomId: string;
+		wxidList: string[];
+	}) => number;
+	readonly [WechatMessagingCommandList.INVITE_ROOM_MEMBERS]: (payload: {
+		roomId: string;
+		wxidList: string[];
+	}) => number;
+};
 
-type _NotUnion<T, U> = U extends any ? [T] extends [U] ? unknown : never : never;
+type _NotUnion<T, U> =
+	U extends any ?
+		[T] extends [U] ?
+			unknown
+		:	never
+	:	never;
 export type NotUnion<T> = [T] extends [infer U] ? _NotUnion<U, U> : never;
