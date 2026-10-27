@@ -280,11 +280,12 @@ export class WechatService implements IWechatService {
 	onMessageCreated<T extends keyof typeof WechatMessagingCommandList>(
 		payload: WechatMessageCreatedEvent<T>,
 	) {
-		const handler = this[WechatMessagingCommandList[payload.command]];
-		if (payload.payload.payload) {
-			payload.payload.resolve(handler(payload.payload.payload));
-		} else {
-			payload.payload.resolve(handler());
-		}
+		const data = payload.payload.payload;
+		const resolve = payload.payload.resolve;
+		const handler = this[
+			WechatMessagingCommandList[payload.command]
+		] as typeof data extends undefined ? () => Parameters<typeof resolve>[0]
+		:	(payload: typeof data) => Parameters<typeof resolve>[0];
+		resolve(handler(data));
 	}
 }
