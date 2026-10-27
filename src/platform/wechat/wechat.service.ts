@@ -40,7 +40,7 @@ export class WechatService implements IWechatService {
 	readonly startListening = () => {
 		this.adapter.connect(this.cmdUrl);
 		this.adapter.listen(this.msgUrl, this.adapterListener);
-		this.startRecvMessage();
+		return this.startRecvMessage();
 	};
 
 	private startRecvMessage() {
