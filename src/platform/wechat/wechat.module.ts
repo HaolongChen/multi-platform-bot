@@ -10,13 +10,13 @@ import { ConfigService } from '@nestjs/config';
 		{
 			provide: 'CMD_URL',
 			useFactory: (configService: ConfigService) =>
-				`tcp://${configService.getOrThrow<string>('REMOTE_HOST')}:${configService.getOrThrow<number>('REMOTE_PORT')}`,
+				`tcp://${configService.getOrThrow<string>('WECHAT_HOST')}:${configService.getOrThrow<number>('WECHAT_CMD_PORT')}`,
 			inject: [ConfigService],
 		},
 		{
 			provide: 'MSG_URL',
 			useFactory: (configService: ConfigService) =>
-				`tcp://${configService.getOrThrow<string>('REMOTE_HOST')}:${configService.getOrThrow<number>('REMOTE_PORT') + 1}`,
+				`tcp://${configService.getOrThrow<string>('WECHAT_HOST')}:${configService.getOrThrow<number>('WECHAT_MSG_PORT')}`,
 			inject: [ConfigService],
 		},
 	],
